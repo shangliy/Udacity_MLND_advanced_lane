@@ -3,7 +3,8 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-import pickle
+import pickle 
+from scipy.misc import imshow
 
 def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
     """
@@ -80,14 +81,14 @@ def draw_lines(img, lines, color=[0, 0, 255], thickness=10):
     k_right = (y2_right-y1_right)/(x2_right-x1_right)
 
 
-    y1_left_fin = 450
+    y1_left_fin = 480
     x1_left_fin = x2_left - (y2_left-y1_left_fin)/k_left
-    y2_left_fin = img.shape[0]-100
+    y2_left_fin = img.shape[0]
     x2_left_fin = x2_left - (y2_left-y2_left_fin)/k_left
 
-    y1_right_fin = 450
+    y1_right_fin = 480
     x1_right_fin = x2_right - (y2_right-y1_right_fin)/k_right
-    y2_right_fin = img.shape[0]-100
+    y2_right_fin = img.shape[0]
     x2_right_fin = x2_right - (y2_right-y2_right_fin)/k_right
 
     return([x1_left_fin,y1_left_fin],[x2_left_fin,y2_left_fin],[x1_right_fin,y1_right_fin]
@@ -207,45 +208,104 @@ def hls_select(img, thresh=(0, 255)):
 # Choose a Sobel kernel size
 ksize = 3 # Choose a larger odd number to smooth gradient measurements
 # Read in an image
-image = mpimg.imread('test3.jpg')
+image = mpimg.imread('test_18.jpg')
 
+
+with open( "camera_cal/wide_dist_pickle.p" ,"rb") as pickfile:
+    dist_pickle = pickle.load( pickfile )
+
+mtx = dist_pickle["mtx"] 
+dist = dist_pickle["dist"]
+indist = cv2.undistort(image, mtx, dist, None, mtx)
+'''
+f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
+f.tight_layout()
+ax1.imshow(image)
+ax1.set_title('Original Image', fontsize=50)
+ax2.imshow(dst, cmap='gray')
+ax2.set_title('Combined image', fontsize=50)
+plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
+plt.show()
+sys.exit()
+'''
 # Apply each of the thresholding functions
-gradx = abs_sobel_thresh(image, orient='x', sobel_kernel=ksize, thresh=(20, 100))
-grady = abs_sobel_thresh(image, orient='y', sobel_kernel=ksize, thresh=(20, 100))
-mag_binary = mag_thresh(image, sobel_kernel=ksize, mag_thresh=(40, 100))
-dir_binary = dir_threshold(image, sobel_kernel=ksize, thresh=(np.pi/6, np.pi/4))
-s_binary = hls_select(image, thresh=(90, 255))
+gradx = abs_sobel_thresh(indist, orient='x', sobel_kernel=ksize, thresh=(20, 250))
+grady = abs_sobel_thresh(indist, orient='y', sobel_kernel=ksize, thresh=(20, 250))
+mag_binary = mag_thresh(indist, sobel_kernel=ksize, mag_thresh=(40, 250))
+dir_binary = dir_threshold(indist, sobel_kernel=ksize, thresh=(np.pi/6, np.pi/4))
+s_binary = hls_select(indist, thresh=(80, 255))
 
 combined = np.zeros_like(dir_binary, dtype=np.uint8)
 combined[ (s_binary == 255)|((((gradx == 1)) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1)))] = 1
 
 
 imshape = combined.shape
-vertices = np.array([[(0,imshape[0]-100),(600, 450), (800, 450), (imshape[1]-400,imshape[0]-100)]], dtype=np.int32)
+vertices = np.array([[(80,imshape[0]-50),(550, 480), (800, 480), (imshape[1],imshape[0]-50)]], dtype=np.int32)
 masked_edges = region_of_interest(combined,vertices)
+
+'''
+f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
+f.tight_layout()
+ax1.imshow(image)
+ax1.set_title('Original Image', fontsize=50)
+ax2.imshow(masked_edges, cmap='gray')
+ax2.set_title('Combined image', fontsize=50)
+plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
+plt.show()
+sys.exit()
+'''
+
 # Define the Hough transform parameters
 # Make a blank the same size as our image to draw on
 rho = 2 # distance resolution in pixels of the Hough grid
 theta = np.pi/180 # angular resolution in radians of the Hough grid
-threshold = 30     # minimum number of votes (intersections in Hough grid cell)
+threshold = 60     # minimum number of votes (intersections in Hough grid cell)
 min_line_length = 30 #minimum number of pixels making up a line
 max_line_gap = 20    # maximum gap in pixels between connectable line segments
 
 a,b,c,d = hough_lines(masked_edges, rho, theta, threshold, min_line_length, max_line_gap)
 #mat_array = cv2.fromarray(masked_edges)
 src =  np.float32([a,c,d,b])
-offset = 100 # offset for dst points
-dst = np.float32([[offset, 0], [imshape[0]-offset, 0],
-                                     [imshape[0]-offset, imshape[1]],
-                                     [offset, imshape[1]]])
-
+offset = 200 # offset for dst points
+img_size = (combined.shape[1], combined.shape[0])
+offset = 300 # offset for dst points
+offset_y = 80
+dst = np.float32([[offset, offset], [img_size[0]-offset, offset], 
+                                            [img_size[0]-offset, img_size[1]-offset_y], 
+                                            [offset, img_size[1]-offset_y]])
 print(src)
 print(dst)
+
 M = cv2.getPerspectiveTransform(src, dst)
 Minv = cv2.getPerspectiveTransform(dst,src)
-warped = cv2.warpPerspective(combined,M,imshape)
+warped = cv2.warpPerspective(combined,M,img_size)
 #color_edges = np.dstack((masked_edges,masked_edges,masked_edges))
 #result = weighted_img(color_edges,lines_image,0.8, 1., 0)
+
+
+# Plot up the fake data
+f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
+f.tight_layout()
+for poin in vertices[0]:
+    ax1.plot(poin[0], poin[1], 'o', color='green')
+
+for poin in src:
+    ax1.plot(poin[0], poin[1], 'o', color='red')
+
+for poin in dst:
+    ax2.plot(poin[0], poin[1], 'o', color='blue')
+ax1.imshow(masked_edges)
+ax1.set_title('Original Image', fontsize=50)
+ax2.imshow(warped, cmap='gray')
+ax2.set_title('Combined image', fontsize=50)
+plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
+plt.show()
+
+
+
+
+
+
 
 
 histogram = np.sum(warped[warped.shape[0]/2:,:], axis=0)
@@ -255,52 +315,78 @@ win_left = np.argmax(histogram[:int(warped.shape[1]/2)])
 win_right = int(warped.shape[1]/2)+np.argmax(histogram[int(warped.shape[1]/2):])
 print (win_left)
 print (win_right)
+distance = warped.shape[0]-80
+leftx = np.zeros((distance+1,))
+leftx[distance] = win_left
 
-leftx = np.zeros((1001,))
-leftx[0] = win_left
+rightx = np.zeros((distance+1,))
+rightx[distance] = win_right
 
-rightx = np.zeros((1001,))
-rightx[0] = win_right
-
-for yl in range(1,1000):
-    yvals = warped.shape[0] - yl
+for yl in range(1,distance+1):
+    yvals = distance - yl
 
 
 
-    if np.max(np.sum(warped[yvals-10:yvals,win_left-15:win_left+15], axis=0)) < 1:
+    if np.max(np.sum(warped[yvals-20:yvals,win_left-40:win_left+40], axis=0)) < 1:
 
-        leftx[yl] = win_left
+        leftx[yvals] = win_left
         win_left = win_left
     else:
-        lx = win_left-15 + np.argmax(np.sum(warped[yvals-10:yvals,win_left-15:win_left+15], axis=0))
-        leftx[yl] = lx
+        histogram = np.sum(warped[yvals-20:yvals,win_left-40:win_left+40], axis=0)
+        max_left = np.max(histogram)
+        max_array = np.where(histogram == max_left)
+        print (win_left-40 + np.median(max_array))
+        lx = win_left-40 + np.argmax(np.sum(warped[yvals-40:yvals,win_left-40:win_left+40], axis=0))
+        lx = win_left-40 + np.median(max_array)
+        leftx[yvals] = lx
         win_left = lx
 
 
-    if np.max(np.sum(warped[yvals-10:yvals,win_right-15:win_right+15], axis=0)) < 1:
-        rightx[yl] = win_right
+    if np.max(np.sum(warped[yvals-20:yvals,win_right-40:win_right+40], axis=0)) < 1:
+        rightx[yvals] = win_right
         win_right = win_right
     else:
-        rx = win_right-15 + np.argmax(np.sum(warped[yvals-10:yvals,win_right-15:win_right+15], axis=0))
-        rightx[yl] = rx
+        histogram = np.sum(warped[yvals-20:yvals,win_right-40:win_right+40], axis=0)
+        max_right = np.max(histogram)
+        max_array = np.where(histogram == max_right)
+        print (win_right-40 + np.median(max_array))
+        rx = win_right-40 + np.argmax(np.sum(warped[yvals-40:yvals,win_right-40:win_right+40], axis=0))
+        rx = win_right-40 + np.median(max_array)
+        rightx[yvals] = rx
         win_right = rx
+    '''
+    f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(24, 9))
+    f.tight_layout()
+    ax1.plot(range(warped.shape[1]),np.sum(warped[yvals-20:yvals:], axis=0))
+    ax1.set_title('Original Image', fontsize=50)
+    ax2.plot(range(80),np.sum(warped[yvals-20:yvals,win_left-40:win_left+40], axis=0))
+    ax2.set_title('Original Image', fontsize=50)
+    ax3.plot(range(80),np.sum(warped[yvals-20:yvals,win_right-40:win_right+40], axis=0))
+    ax3.set_title('Original Image', fontsize=50)
+    ax4.imshow(warped, cmap='gray')
+    ax4.set_title('Combined image', fontsize=50)
+    plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
+    plt.show()
+    '''
+   
+    
 
 
+#leftx = leftx[::-1]
+#rightx = rightx[::-1]  # Reverse to match top-to-bottom in y
 
-leftx = leftx[::-1]
-rightx = rightx[::-1]  # Reverse to match top-to-bottom in y
-
-yvals = np.linspace(0, 1000, num=1001)*1.  # to cover same y-range as image
+yvals = np.linspace(0, distance, num=distance+1)*1.  # to cover same y-range as image
 left_fit = np.polyfit(yvals, leftx, 2)
 left_fitx = left_fit[0]*yvals**2 + left_fit[1]*yvals + left_fit[2]
 right_fit = np.polyfit(yvals, rightx, 2)
 right_fitx = right_fit[0]*yvals**2 + right_fit[1]*yvals + right_fit[2]
 
+
 # Plot up the fake data
 plt.plot(leftx, yvals, 'o', color='red')
 plt.plot(rightx, yvals, 'o', color='blue')
-plt.xlim(0, 800)
-plt.ylim(0, 1100)
+plt.xlim(0, 1280)
+plt.ylim(0, distance+1)
 plt.plot(left_fitx, yvals, color='green', linewidth=3)
 plt.plot(right_fitx, yvals, color='green', linewidth=3)
 plt.gca().invert_yaxis() # to visualize as we do the images
@@ -322,12 +408,14 @@ pts_left = np.array([np.transpose(np.vstack([left_fitx, yvals]))])
 pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, yvals])))])
 pts = np.hstack((pts_left, pts_right))
 
+
+
 # Draw the lane onto the warped blank image
 cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
 # Warp the blank back to original image space using inverse perspective matrix (Minv)
 newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
 # Combine the result with the original image
-result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
+result = cv2.addWeighted(indist, 1, newwarp, 0.3, 0)
 plt.imshow(result)
 
 
