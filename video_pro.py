@@ -79,7 +79,7 @@ def process_image(image):
     if frame>-1:
         flag_imshow = True
         #imsave('test_'+str(frame)+'.jpg',image)
-    #flag_imshow = False
+    flag_imshow = False
     using_gaussian =True
     #1.undistort image using calibre matrix
     indist = cv2.undistort(image, mtx, dist, None, mtx)
@@ -96,7 +96,7 @@ def process_image(image):
     grady = utils.abs_sobel_thresh(indist, orient='y', sobel_kernel=ksize, thresh=(50, 250))
     mag_binary = utils.mag_thresh(indist, sobel_kernel=ksize, mag_thresh=(40, 250))
     dir_binary = utils.dir_threshold(indist, sobel_kernel=ksize, thresh=(np.pi/6, np.pi/4))
-    s_binary = utils.hls_select(indist, thresh=(120, 255))
+    s_binary = utils.hls_select(indist, thresh=(100, 255))
 
     combined = np.zeros_like(dir_binary, dtype=np.uint8)
     combined[ (s_binary == 255)|((((gradx == 1)) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1)))] = 1
@@ -116,7 +116,7 @@ def process_image(image):
     if (frame == 0):
         src = utils.point_select_ori(combined,forward_pixel)
         offset = 300 # offset for dst points
-        offset_y = 250
+        offset_y = 0
         dst = np.float32([[offset, offset_y], [img_size[0]-offset, offset_y], 
                                             [img_size[0]-offset, img_size[1]], 
                                             [offset, img_size[1]]])
@@ -163,11 +163,21 @@ def process_image(image):
 
     if (frame < frame_cut):
         distance = warped.shape[0]
-        histogram = np.sum(warped[distance/2:,:], axis=0)
-
+        #print (distance)
+        histogram = np.sum(warped[int(distance/2):,:], axis=0)
+        plt.plot(range(int(warped.shape[1])),histogram)
+        plt.show
         
-        win_left = np.argmax(histogram[:int(warped.shape[1]/2)])
+        max_left = np.max(histogram[50:int(warped.shape[1]/2)])
+        max_array = np.where(histogram[50:int(warped.shape[1]/2)] == max_left)
+        
+        win_left = np.argmax(histogram[50:int(warped.shape[1]/2)])
+        win_left =  50 + np.median(max_array)
+
+        max_right = np.max(histogram[int(warped.shape[1]/2):])
+        max_array = np.where(histogram[int(warped.shape[1]/2):] == max_right)
         win_right = int(warped.shape[1]/2)+np.argmax(histogram[int(warped.shape[1]/2):])
+        win_right =  int(warped.shape[1]/2) + np.min(max_array)
         start_left = win_left
         start_right = win_right
         #print(start_left)
@@ -180,44 +190,85 @@ def process_image(image):
 
         rightx = np.zeros((distance+1,))
         rightx[distance] = win_right
+        y_left_tem = [distance]
+        y_right_tem = [distance]
+        x_left_tem = [win_left]
+        x_right_tem = [win_right]
 
+        right_flag = True
+        left_flag = True
         for yl in range(1,distance+1):
             yvals = distance - yl
+            
+            
 
-            if np.sum(np.sum(warped[yvals-40:yvals,win_left-15:win_left+15], axis=0)) < 1:
-
-                leftx[yvals] = win_left
-                win_left = win_left
+            if np.sum(np.sum(warped[yvals-100:yvals,win_left-15:win_left+15], axis=0)) < 1:
+                if  yl < 200:
+                     left_flag = False
+                if left_flag == True:
+                    
+                    win_left = win_left
+                    leftx[yvals] = left_fit_tem[0]*yvals**2 + left_fit_tem[1]*yvals + left_fit_tem[2]
+                else:
+                    leftx[yvals] = win_left
+                win_left = leftx[yvals]
             else:
-                histogram = np.sum(warped[yvals-40:yvals,win_left-15:win_left+15], axis=0)
+                y_left_tem.append(yvals)
+                histogram = np.sum(warped[yvals-100:yvals,win_left-15:win_left+15], axis=0)
                 max_left = np.max(histogram)
                 max_array = np.where(histogram == max_left)
-                lx = win_left-15 + np.argmax(np.sum(warped[yvals-40:yvals,win_left-15:win_left+15], axis=0))
+                lx = win_left-15 + np.argmax(np.sum(warped[yvals-200:yvals,win_left-15:win_left+15], axis=0))
                 lx = win_left-15 + np.median(max_array)
                 leftx[yvals] = lx
                 win_left = lx
+                x_left_tem.append(win_left)
+                left_fit_tem = np.polyfit(y_left_tem, x_left_tem, 2)
 
 
-            if np.sum(np.sum(warped[yvals-40:yvals,win_right-15:win_right+15], axis=0)) < 1:
-                rightx[yvals] = win_right
-                win_right = win_right
+
+            if np.sum(np.sum(warped[yvals-100:yvals,win_right-15:win_right+15], axis=0)) < 1:
+                if yl < 200:
+                    right_flag =False
+                if right_flag == True:
+                    rightx[yvals] = win_right
+                    win_right = win_right
+                    rightx[yvals] = right_fit_tem[0]*yvals**2 + right_fit_tem[1]*yvals + right_fit_tem[2]
+                else:
+                    rightx[yvals] = win_right
+                
+                win_right = rightx[yvals]
             else:
-                histogram = np.sum(warped[yvals-40:yvals,win_right-15:win_right+15], axis=0)
+                y_right_tem.append(yvals)
+                histogram = np.sum(warped[yvals-100:yvals,win_right-15:win_right+15], axis=0)
                 max_right = np.max(histogram)
                 max_array = np.where(histogram == max_right)
-                rx = win_right-15 + np.argmax(np.sum(warped[yvals-40:yvals,win_right-15:win_right+15], axis=0))
-                rx = win_right-15 + np.median(max_array)
+                rx = win_right-15 + np.argmax(np.sum(warped[yvals-200:yvals,win_right-15:win_right+15], axis=0))
+                rx = win_right-15 + np.min(max_array)
                 rightx[yvals] = rx
                 win_right = rx
+                x_right_tem.append(win_right)
+                right_fit_tem = np.polyfit(y_right_tem, x_right_tem, 2)
         
 
     else:
 
+        error_count = 0
         distance = warped.shape[0]
         histogram = np.sum(warped[distance/2:,:], axis=0)
         
         left_start_av = line_left.start
         right_start_av = line_right.start
+
+
+        max_left = np.max(histogram[left_start_av-15:left_start_av+15])
+        max_array = np.where(histogram[left_start_av-15:left_start_av+15] == max_left)
+        
+        win_left =  left_start_av-15 + np.median(max_array)
+
+        max_right = np.max(histogram[right_start_av-15:right_start_av+15])
+        max_array = np.where(histogram[right_start_av-15:right_start_av+15] == max_right)
+        
+        win_right =  right_start_av-15 + np.median(max_array)
         #print ('left_start_av',left_start_av)
         #win_left = left_start_av-15 + np.argmax(histogram[left_start_av-15:left_start_av+15])
         #win_right =right_start_av -15 + int(warped.shape[1]/2)+np.argmax(histogram[right_start_av-15:right_start_av+15])
@@ -228,8 +279,9 @@ def process_image(image):
             
         else:
             win_left = left_start_av-15 + np.argmax(histogram[left_start_av-15:left_start_av+15])
-            if abs(win_left-left_start_av) > 15:
+            if abs(win_left-left_start_av) > 10:
                 win_left = left_start_av
+                left_start = win_left
                 #line_left.detected = False
             else:
                 left_start = win_left
@@ -240,12 +292,13 @@ def process_image(image):
             
         else:
             win_right =right_start_av -15 +np.argmax(histogram[right_start_av-15:right_start_av+15])
-            if abs(win_right-right_start_av) > 15:
+            if abs(win_right-right_start_av) > 10:
                 win_right = right_start_av
                 #line_right.detected = False
             else:
                 right_start = win_right
-                
+        left_start = win_left
+        right_start = win_right
 
         leftx = np.zeros((distance+1,))
         leftx[distance] = win_left
@@ -261,8 +314,8 @@ def process_image(image):
         #print (win_left)
         
         #print (win_right)
-        window_size_left = 20
-        window_size_right = 20
+        window_size_left = 30
+        window_size_right = 30
         for yl in range(1,distance+1):
             yvals = distance - yl
             
@@ -271,16 +324,16 @@ def process_image(image):
                 leftx[yvals] = line_left.best_fit[0]*yvals**2 + line_left.best_fit[1]*yvals + line_left.best_fit[2]
                 win_left = leftx[yvals]
                 #window_size_left = 100
-                #line_left.detected = False
+                
             else:
-                histogram = np.sum(warped[yvals-40:yvals,win_left-window_size_left:win_left+window_size_left], axis=0)
+                histogram = np.sum(warped[yvals-20:yvals,win_left-window_size_left:win_left+window_size_left], axis=0)
                 max_left = np.max(histogram)
                 max_array = np.where(histogram == max_left)
                 lx = win_left-window_size_left + np.argmax(np.sum(warped[yvals-20:yvals,win_left-window_size_left:win_left+window_size_left], axis=0))
                 lx = win_left-window_size_left + np.median(max_array)
                 leftx[yvals] = lx
                 win_left = lx
-            if (abs(line_left.recent_xfitted[yvals]-leftx[yvals]))>50:
+            if (abs(line_left.recent_xfitted[yvals]-leftx[yvals]))>30:
                 leftx[yvals] = line_left.recent_xfitted[yvals]
 
             #print ([yvals],leftx[yvals])
@@ -289,8 +342,7 @@ def process_image(image):
                 
                 rightx[yvals] = line_right.best_fit[0]*yvals**2 + line_right.best_fit[1]*yvals + line_right.best_fit[2]
                 win_right = rightx[yvals]
-                #window_size_right = 100
-                #line_right.detected = False
+                
             else:
                 histogram = np.sum(warped[yvals-20:yvals,win_right-window_size_right:win_right+window_size_right], axis=0)
                 max_right = np.max(histogram)
@@ -299,7 +351,7 @@ def process_image(image):
                 rx = win_right-window_size_right + np.median(max_array)
                 rightx[yvals] = rx
                 win_right = rx
-            if (abs(line_right.recent_xfitted[yvals]-rightx[yvals]))>50:
+            if (abs(line_right.recent_xfitted[yvals]-rightx[yvals]))>30:
                 rightx[yvals] = line_right.recent_xfitted[yvals]
         
             
@@ -407,8 +459,8 @@ def process_image(image):
     ym_per_pix = 30/800 # meters per pixel in y dimension
     xm_per_pix = 3.7/680 # meteres per pixel in x dimension
 
-    left_fit_cr = np.polyfit(yvals*ym_per_pix, leftx*xm_per_pix, 2)
-    right_fit_cr = np.polyfit(yvals*ym_per_pix, rightx*xm_per_pix, 2)
+    left_fit_cr = np.polyfit(yvals*ym_per_pix, left_fitx*xm_per_pix, 2)
+    right_fit_cr = np.polyfit(yvals*ym_per_pix, right_fitx*xm_per_pix, 2)
     left_curverad = ((1 + (2*left_fit_cr[0]*y_eval + left_fit_cr[1])**2)**1.5) \
                                 /np.absolute(2*left_fit_cr[0])
     right_curverad = ((1 + (2*right_fit_cr[0]*y_eval + right_fit_cr[1])**2)**1.5) \
@@ -416,12 +468,13 @@ def process_image(image):
     # Now our radius of curvature is in meters
     #print(left_curverad, 'm', right_curverad, 'm')
 
-
+    car_cen = (start_left+start_right)/2.
+    center_distance = abs( warped.shape[1]/2. - car_cen)*xm_per_pix
+    #print center_distance
     font = cv2.FONT_HERSHEY_COMPLEX
     middlepanel = np.zeros((120, 1280, 3), dtype=np.uint8)
-    cv2.putText(middlepanel, 'Estimated left lane curvature:' + str(left_curverad), (30, 40), font, 1, (255,0,0), 2)
-    cv2.putText(middlepanel, 'Estimated left lane curvature:' + str(left_curverad), (30, 40), font, 1, (255,0,0), 2)
-    cv2.putText(middlepanel, 'Estimated Meters right of center: ERROR!', (30, 90), font, 1, (255,0,0), 2)
+    cv2.putText(middlepanel, 'Estimated lane curvature: ' + str((left_curverad+right_curverad)/2.0), (30, 60), font, 1, (0,255,0), 2)
+    cv2.putText(middlepanel, 'Estimated Meters to the center of the lane: '+ str(center_distance)+"m", (30, 90), font, 1, (0,255,0), 2)
 
     def dack_img(img):
         img_out = np.dstack((img,img,img))
@@ -447,14 +500,14 @@ def process_image(image):
 
 
         
-
+    
 
     if (flag_imshow):
         imshow(result)
     frame = frame + 1
     #imsave('diag_'+str(frame)+'.jpg',diagScreen)
     
-    return diagScreen
+    return result
 
         
 
