@@ -183,7 +183,7 @@ def point_select_ori(binary_img,forward_pixel):
     ax1.imshow(binary_img)
     ax1.set_title('Original Image', fontsize=50)
     ax2.imshow(masked_edges, cmap='gray')
-    ax2.set_title('Combined image', fontsize=50)
+    ax2.set_title('Masked image', fontsize=50)
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
 
@@ -195,5 +195,10 @@ def point_select_ori(binary_img,forward_pixel):
 
     a,b,c,d = hough_lines_points(masked_edges, rho, theta, threshold, min_line_length, max_line_gap)
     return np.float32([a,c,d,b])
+
+def dack_img(img):
+        img_out = np.dstack((img,img,img))
+        img_out = img_out * 255
+        return img_out
 
 

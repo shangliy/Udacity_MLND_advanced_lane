@@ -1,3 +1,10 @@
+#!usr/bin/python
+'''
+author: Shanglin Yang (kudoysl@gmail.com)
+
+This script implements whole pipeline on one image 
+'''
+
 import sys
 import numpy as np
 import cv2
