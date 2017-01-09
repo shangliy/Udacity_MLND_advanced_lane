@@ -112,7 +112,7 @@ def process_image(image):
         plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
         plt.show()
     
-    #3.For first images, need to calculate the prospective transform matrix
+    #3.For first image, need to calculate the prospective transform matrix
     if (frame == 0):
         src = utils.point_select_ori(combined,forward_pixel)
         offset = 300 # offset for dst points
@@ -160,7 +160,7 @@ def process_image(image):
         plt.show()
     
     #4.Detect lines
-
+    #For first image, use strict detection
     if (frame < frame_cut):
         distance = warped.shape[0]
         #print (distance)
@@ -250,7 +250,7 @@ def process_image(image):
             
             win_right = rightx[yvals]
         
-
+    # Frame with more pre_info
     else:
 
         distance = warped.shape[0]
@@ -292,6 +292,7 @@ def process_image(image):
             yvals = distance - yl
             forth_dis = min(30,yvals)
             histogram = np.sum(warped[yvals-forth_dis:yvals,win_left-window_size_left:win_left+window_size_left], axis=0)
+            # whether find point
             if np.sum(histogram) < 1:
                 leftx[yvals] = line_left.best_fit[0]*yvals**2 + line_left.best_fit[1]*yvals + line_left.best_fit[2]
                 leftx[yvals] = (leftx[yvals] + win_left)/2
@@ -301,10 +302,10 @@ def process_image(image):
                 lx = win_left-window_size_left + np.max(max_array)
                 leftx[yvals] = lx
             
-            if (abs(line_left.recent_xfitted[yvals]-leftx[yvals]))>100:
+            if (abs(line_left.recent_xfitted[yvals]-leftx[yvals]))>60:
                 leftx[yvals] = line_left.recent_xfitted[yvals]
 
-            if (abs(win_left-leftx[yvals]))>60:
+            if (abs(win_left-leftx[yvals]))>50:
                 leftx[yvals] = win_left
 
             win_left = leftx[yvals]
@@ -319,10 +320,10 @@ def process_image(image):
                 rx = win_right-window_size_right + np.min(max_array)
                 rightx[yvals] = rx
             
-            if (abs(line_right.recent_xfitted[yvals]-rightx[yvals]))>100:
+            if (abs(line_right.recent_xfitted[yvals]-rightx[yvals]))>60:
                 rightx[yvals] = line_right.recent_xfitted[yvals]
                 
-            if (abs(win_right-rightx[yvals]))>60:
+            if (abs(win_right-rightx[yvals]))>50:
                 rightx[yvals] = win_right
 
             win_right = rightx[yvals]
@@ -336,6 +337,7 @@ def process_image(image):
     #print('line_right.start',line_right.start)
     #print ('start_right',start_right)
 
+    # Store and update lane information
     if ( line_left.detected  ):
         line_left.recent_xfitted = left_fitx
         line_left.bestx *= frame

@@ -153,9 +153,11 @@ def process_image(image):
     x_left_tem = [win_left]
     x_right_tem = [win_right]
 
-    plt.plot(range(int(warped.shape[1])),histogram,linewidth=2)
+    plt.imshow(warped, cmap='gray')
+    #plt.plot(range(int(warped.shape[1])),histogram,linewidth=2)
     plt.axvline( win_left,color='g',linewidth=5)
     plt.axvline( win_right,color='r',linewidth=5)
+    
     plt.show()
 
     right_flag = True
