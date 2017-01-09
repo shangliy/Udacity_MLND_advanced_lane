@@ -92,7 +92,7 @@ The steps of this project are the following:
   > ![Detail](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/decription_video.png?raw=true)
   
  * Output video link
-  > Standard output video [link](https://www.youtube.com/watch?v=y-jYvdBreLM&feature=youtu.be)
+  > Standard output video [link](https://www.youtube.com/watch?v=y-jYvdBreLM&feature=youtu.be)  
   > Detail Decscription video[link](https://www.youtube.com/watch?v=7zjYBcYd7jc)
 
 2. Video processing pipline.
