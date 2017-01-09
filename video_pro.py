@@ -170,26 +170,22 @@ def process_image(image):
         
         max_left = np.max(histogram[50:int(warped.shape[1]/2)])
         max_array = np.where(histogram[50:int(warped.shape[1]/2)] == max_left)
-        
         win_left = np.argmax(histogram[50:int(warped.shape[1]/2)])
         win_left =  50 + np.median(max_array)
+        start_left = win_left
 
         max_right = np.max(histogram[int(warped.shape[1]/2):])
         max_array = np.where(histogram[int(warped.shape[1]/2):] == max_right)
         win_right = int(warped.shape[1]/2)+np.argmax(histogram[int(warped.shape[1]/2):])
-        win_right =  int(warped.shape[1]/2) + np.min(max_array)
-        start_left = win_left
+        win_right =  int(warped.shape[1]/2) + np.median(max_array)
         start_right = win_right
-        #print(start_left)
-        #print(line_left.start)
-        #print (win_left)
-        #print (win_right)
-
+        
         leftx = np.zeros((distance+1,))
         leftx[distance] = win_left
 
         rightx = np.zeros((distance+1,))
         rightx[distance] = win_right
+
         y_left_tem = [distance]
         y_right_tem = [distance]
         x_left_tem = [win_left]
@@ -197,170 +193,139 @@ def process_image(image):
 
         right_flag = True
         left_flag = True
+
+        win_left_size = 50
+        win_right_size = 50
         for yl in range(1,distance+1):
             yvals = distance - yl
-            
-            
-
-            if np.sum(np.sum(warped[yvals-100:yvals,win_left-15:win_left+15], axis=0)) < 1:
+            forth_dis = min(100,yvals)
+            if np.sum(np.sum(warped[yvals-forth_dis:yvals,win_left-win_left_size:win_left+win_left_size], axis=0)) < 1:
+                
                 if  yl < 200:
-                     left_flag = False
-                if left_flag == True:
-                    
-                    win_left = win_left
-                    leftx[yvals] = left_fit_tem[0]*yvals**2 + left_fit_tem[1]*yvals + left_fit_tem[2]
+                    left_flag = False  
+                if left_flag == True:               
+                    leftx[yvals] = left_fit_tem[0]*yvals + left_fit_tem[1]
                 else:
                     leftx[yvals] = win_left
-                win_left = leftx[yvals]
+                
             else:
-                y_left_tem.append(yvals)
-                histogram = np.sum(warped[yvals-100:yvals,win_left-15:win_left+15], axis=0)
+                
+                histogram = np.sum(warped[yvals-forth_dis:yvals,win_left- win_left_size:win_left+ win_left_size], axis=0)
                 max_left = np.max(histogram)
                 max_array = np.where(histogram == max_left)
-                lx = win_left-15 + np.argmax(np.sum(warped[yvals-200:yvals,win_left-15:win_left+15], axis=0))
-                lx = win_left-15 + np.median(max_array)
+                lx = win_left- win_left_size + np.median(max_array)
                 leftx[yvals] = lx
-                win_left = lx
-                x_left_tem.append(win_left)
-                left_fit_tem = np.polyfit(y_left_tem, x_left_tem, 2)
+                
+                if  yl < 200:
+                    x_left_tem.append(win_left)
+                    y_left_tem.append(yvals)
+                    left_fit_tem = np.polyfit(y_left_tem, x_left_tem, 1)
+            
+            win_left = leftx[yvals]
 
-
-
-            if np.sum(np.sum(warped[yvals-100:yvals,win_right-15:win_right+15], axis=0)) < 1:
+            if np.sum(np.sum(warped[yvals-forth_dis:yvals,win_right-win_right_size:win_right+win_right_size], axis=0)) < 1:
+                
                 if yl < 200:
                     right_flag =False
+
                 if right_flag == True:
-                    rightx[yvals] = win_right
-                    win_right = win_right
-                    rightx[yvals] = right_fit_tem[0]*yvals**2 + right_fit_tem[1]*yvals + right_fit_tem[2]
+                        
+                    rightx[yvals] = right_fit_tem[0]*yvals + right_fit_tem[1]
                 else:
                     rightx[yvals] = win_right
                 
-                win_right = rightx[yvals]
             else:
-                y_right_tem.append(yvals)
-                histogram = np.sum(warped[yvals-100:yvals,win_right-15:win_right+15], axis=0)
+                
+                histogram = np.sum(warped[yvals-forth_dis:yvals,win_right-win_right_size:win_right+win_right_size], axis=0)
                 max_right = np.max(histogram)
                 max_array = np.where(histogram == max_right)
-                rx = win_right-15 + np.argmax(np.sum(warped[yvals-200:yvals,win_right-15:win_right+15], axis=0))
-                rx = win_right-15 + np.min(max_array)
+                rx = win_right-win_right_size + np.argmax(np.sum(warped[yvals-100:yvals,win_right-win_right_size:win_right+win_right_size], axis=0))
+                rx = win_right-win_right_size + np.median(max_array)
                 rightx[yvals] = rx
-                win_right = rx
-                x_right_tem.append(win_right)
-                right_fit_tem = np.polyfit(y_right_tem, x_right_tem, 2)
+    
+                if  yl < 200:
+                    y_right_tem.append(yvals)
+                    x_right_tem.append(win_right)
+                    right_fit_tem = np.polyfit(y_right_tem, x_right_tem, 1)
+            
+            win_right = rightx[yvals]
         
 
     else:
 
-        error_count = 0
         distance = warped.shape[0]
         histogram = np.sum(warped[distance/2:,:], axis=0)
         
         left_start_av = line_left.start
         right_start_av = line_right.start
 
-
         max_left = np.max(histogram[left_start_av-15:left_start_av+15])
-        max_array = np.where(histogram[left_start_av-15:left_start_av+15] == max_left)
-        
-        win_left =  left_start_av-15 + np.median(max_array)
+        max_array = np.where(histogram[left_start_av-15:left_start_av+15] == max_left)     
+        win_left =  left_start_av-15 + np.max(max_array)
 
         max_right = np.max(histogram[right_start_av-15:right_start_av+15])
-        max_array = np.where(histogram[right_start_av-15:right_start_av+15] == max_right)
-        
-        win_right =  right_start_av-15 + np.median(max_array)
-        #print ('left_start_av',left_start_av)
-        #win_left = left_start_av-15 + np.argmax(histogram[left_start_av-15:left_start_av+15])
-        #win_right =right_start_av -15 + int(warped.shape[1]/2)+np.argmax(histogram[right_start_av-15:right_start_av+15])
+        max_array = np.where(histogram[right_start_av-15:right_start_av+15] == max_right)    
+        win_right =  right_start_av-15 + np.min(max_array)
 
-        if np.sum(histogram[left_start_av-15:left_start_av+15]) < 1:
-            win_left = left_start_av
-            #line_left.detected = False
-            
+        if np.sum(histogram[left_start_av-15:left_start_av+15]) < 1 or abs(win_left-left_start_av) > 20:
+            win_left = left_start_av     
         else:
-            win_left = left_start_av-15 + np.argmax(histogram[left_start_av-15:left_start_av+15])
-            if abs(win_left-left_start_av) > 10:
-                win_left = left_start_av
-                left_start = win_left
-                #line_left.detected = False
-            else:
-                left_start = win_left
-                
-        if np.sum(histogram[right_start_av-15:right_start_av+15]) < 1:
+            win_left =  left_start_av-15 + np.max(max_array)
+
+        if np.sum(histogram[right_start_av-15:right_start_av+15]) < 1 or abs(win_right-right_start_av) > 20:
             win_right = right_start_av
-            #line_right.detected = False
-            
         else:
-            win_right =right_start_av -15 +np.argmax(histogram[right_start_av-15:right_start_av+15])
-            if abs(win_right-right_start_av) > 10:
-                win_right = right_start_av
-                #line_right.detected = False
-            else:
-                right_start = win_right
-        left_start = win_left
-        right_start = win_right
+            win_right =  right_start_av-15 + np.min(max_array)
+            
+        start_left = win_left
+        start_right = win_right
 
         leftx = np.zeros((distance+1,))
         leftx[distance] = win_left
-        #print (leftx)
-
+        
         rightx = np.zeros((distance+1,))
         rightx[distance] = win_right
 
-        start_left = win_left
-        start_right = win_right
-        #print ('start_left',start_left)
-
-        #print (win_left)
-        
-        #print (win_right)
-        window_size_left = 30
+        window_size_left = 25
         window_size_right = 30
         for yl in range(1,distance+1):
             yvals = distance - yl
-            
-            if np.sum(np.sum(warped[yvals-20:yvals,win_left-window_size_left:win_left+window_size_left], axis=0)) < 1:
-
+            forth_dis = min(30,yvals)
+            histogram = np.sum(warped[yvals-forth_dis:yvals,win_left-window_size_left:win_left+window_size_left], axis=0)
+            if np.sum(histogram) < 1:
                 leftx[yvals] = line_left.best_fit[0]*yvals**2 + line_left.best_fit[1]*yvals + line_left.best_fit[2]
-                win_left = leftx[yvals]
-                #window_size_left = 100
-                
+                leftx[yvals] = (leftx[yvals] + win_left)/2
             else:
-                histogram = np.sum(warped[yvals-20:yvals,win_left-window_size_left:win_left+window_size_left], axis=0)
                 max_left = np.max(histogram)
                 max_array = np.where(histogram == max_left)
-                lx = win_left-window_size_left + np.argmax(np.sum(warped[yvals-20:yvals,win_left-window_size_left:win_left+window_size_left], axis=0))
-                lx = win_left-window_size_left + np.median(max_array)
+                lx = win_left-window_size_left + np.max(max_array)
                 leftx[yvals] = lx
-                win_left = lx
-            if (abs(line_left.recent_xfitted[yvals]-leftx[yvals]))>30:
+            
+            if (abs(line_left.recent_xfitted[yvals]-leftx[yvals]))>100:
                 leftx[yvals] = line_left.recent_xfitted[yvals]
 
-            #print ([yvals],leftx[yvals])
+            if (abs(win_left-leftx[yvals]))>60:
+                leftx[yvals] = win_left
 
-            if np.sum(np.sum(warped[yvals-20:yvals,win_right-window_size_right:win_right+window_size_right], axis=0)) < 1:
-                
+            win_left = leftx[yvals]
+
+            histogram = np.sum(warped[yvals-forth_dis:yvals,win_right-window_size_right:win_right+window_size_right], axis=0)
+            if np.sum(histogram) < 1:
                 rightx[yvals] = line_right.best_fit[0]*yvals**2 + line_right.best_fit[1]*yvals + line_right.best_fit[2]
-                win_right = rightx[yvals]
-                
+                rightx[yvals] = (rightx[yvals] + win_right)/2   
             else:
-                histogram = np.sum(warped[yvals-20:yvals,win_right-window_size_right:win_right+window_size_right], axis=0)
                 max_right = np.max(histogram)
                 max_array = np.where(histogram == max_right)
-                rx = win_right-window_size_right + np.argmax(np.sum(warped[yvals-20:yvals,win_right-window_size_right:win_right+window_size_right], axis=0))
-                rx = win_right-window_size_right + np.median(max_array)
+                rx = win_right-window_size_right + np.min(max_array)
                 rightx[yvals] = rx
-                win_right = rx
-            if (abs(line_right.recent_xfitted[yvals]-rightx[yvals]))>30:
-                rightx[yvals] = line_right.recent_xfitted[yvals]
-        
             
-        
+            if (abs(line_right.recent_xfitted[yvals]-rightx[yvals]))>100:
+                rightx[yvals] = line_right.recent_xfitted[yvals]
+                
+            if (abs(win_right-rightx[yvals]))>60:
+                rightx[yvals] = win_right
 
-
-    #leftx = leftx[::-1]
-    #rightx = rightx[::-1]  # Reverse to match top-to-bottom in y
-
+            win_right = rightx[yvals]
         
     yvals = np.linspace(0, distance, num=distance+1)*1.  # to cover same y-range as image
     left_fit = np.polyfit(yvals, leftx, 2)
@@ -368,7 +333,8 @@ def process_image(image):
     right_fit = np.polyfit(yvals, rightx, 2)
     right_fitx = right_fit[0]*yvals**2 + right_fit[1]*yvals + right_fit[2]
 
-    #print('line_left.start',line_left.start)
+    #print('line_right.start',line_right.start)
+    #print ('start_right',start_right)
 
     if ( line_left.detected  ):
         line_left.recent_xfitted = left_fitx
@@ -376,11 +342,13 @@ def process_image(image):
         line_left.bestx += left_fitx*frame
         line_left.best_fit *= frame
         line_left.best_fit += left_fit*frame
+       
         line_left.start *= frame
-        line_left.start += start_left*frame
+        line_left.start += start_left
+        line_left.start /= (frame+1)
         line_left.bestx /= (frame+frame)
         line_left.best_fit /= (frame+frame)
-        line_left.start /= (frame+frame)
+        
     else:
         line_left.bestx = left_fitx
         line_left.best_fit = left_fit
@@ -394,11 +362,14 @@ def process_image(image):
         line_right.bestx += right_fitx*frame
         line_right.best_fit *= frame
         line_right.best_fit += frame*right_fit
-        line_right.start *= frame
-        line_right.start += start_right*frame
         line_right.bestx /= (frame+frame)
         line_right.best_fit /= (frame+frame)
-        line_right.start /= (frame+frame)
+        
+        line_right.start *= frame
+        line_right.start += start_right
+        line_right.start /= (frame+1)
+        
+        
     else:
         line_right.bestx = right_fitx
         line_right.best_fit = right_fit
@@ -507,7 +478,7 @@ def process_image(image):
     frame = frame + 1
     #imsave('diag_'+str(frame)+'.jpg',diagScreen)
     
-    return result
+    return diagScreen
 
         
 
