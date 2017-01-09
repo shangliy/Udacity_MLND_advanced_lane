@@ -2,6 +2,7 @@
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
 This project is to use advanced technologies to solve lane detection problem.
+> ![Detail](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/decription_video.png?raw=true)
 
 ### Image/Frame Processing:
 The steps of this project are the following:  
@@ -86,10 +87,13 @@ The steps of this project are the following:
 1. The image processing is successfully implemented to find the lane lines in each frame  the video.Besides, the outputs are generated regarding the radius of curvature of the lane and vehicle position within the lane is also shown in description video.
  * Screen_shot of output video
   > Standard output video
+  > ![Standard](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/sd_video.png?raw=true)
   > Detail Decscription video
+  > ![Detail](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/decription_video.png?raw=true)
+  
  * Output video link
-  > Standard output video
-  > Detail Decscription video
+  > Standard output video [link](https://www.youtube.com/watch?v=y-jYvdBreLM&feature=youtu.be)
+  > Detail Decscription video[link](https://www.youtube.com/watch?v=7zjYBcYd7jc)
 
 2. Video processing pipline.
 	* The pipline flowchart shown below
@@ -109,4 +113,13 @@ The steps of this project are the following:
     >       Then, compare the detected or calculated point with pre_frame and pre_row point, then if they fail, I choose to use point from pre_frame or row.
     >       Detail shown below:
     >       **row point search in later frames**![row point search](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/New_search.png?raw=true)
-	
+
+### Improvement and Challenge:
+1. Improvement
+ * Here I consider the time_continuous by using pre_frame and robust frame information, But there is also spatial connection within one frame. Now, although I have use pre_row to test whether the point is Ok, I still can use these spatial information to help make prediction when point missing.
+ * Now, I use threshold to test whether line believable, which is binary. There could be more accurate way considering all information together to giving a confidence number to make the judgement.
+
+2. Challenge
+ * It may have bad performance for video which has bad start frames, becasue there first several frame with no assumption or reference;
+ * It may unable to catch with sudden changes in direction, cause the time_line continuous is set for comparable small theshold to keep line stable. In the future, these threshold may need to be dynamic
+
