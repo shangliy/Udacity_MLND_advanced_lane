@@ -22,7 +22,7 @@ from scipy.misc import imshow,imread,imsave
 
 def process_image(image):
 
-    flag_imshow = True
+    flag_imshow = False
     
     #0. Read in the camera calibration matrix and distortion coefficients
     with open( "camera_cal/wide_dist_pickle.p" ,"rb") as pickfile:
@@ -282,8 +282,12 @@ def process_image(image):
                                 /np.absolute(2*left_fit_cr[0])
     right_curverad = ((1 + (2*right_fit_cr[0]*y_eval + right_fit_cr[1])**2)**1.5) \
                                     /np.absolute(2*right_fit_cr[0])
+    curvature =  (left_curverad+right_curverad)/2.0
     car_cen = (start_left+start_right)/2.                              
     center_distance = abs( warped.shape[1]/2. - car_cen)*xm_per_pix
+
+    print ('center_distance',center_distance)
+    print ('curvature',curvature)
 
     
     
