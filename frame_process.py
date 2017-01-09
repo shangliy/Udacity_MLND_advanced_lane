@@ -53,7 +53,7 @@ def process_image(image):
     mag_binary = utils.mag_thresh(indist, sobel_kernel=ksize, mag_thresh=(40, 250))
 
     #Gradient direction thresh fllter
-    dir_binary = utils.dir_threshold(indist, sobel_kernel=ksize, thresh=(np.pi/6, np.pi/4))
+    dir_binary = utils.dir_threshold(indist, sobel_kernel=ksize, thresh=(np.pi/6, np.pi/2))
     
     #HLS S-channel thresh fllter
     s_binary = utils.hls_select(indist, thresh=(100, 255))
