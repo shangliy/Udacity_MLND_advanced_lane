@@ -6,7 +6,7 @@ This script works to compute calibration matrix based on
 the images for camera calibration stored in the folder called `camera_cal`.
 And save the amera calibration matrix ['mtx'] and distortion coefficients ['dist'] to a pickle file 'wide_dist_pickle.p'
 '''
-
+import sys
 import cv2
 import glob
 import numpy as np
@@ -40,6 +40,10 @@ for idx, fname in enumerate(images):
         imgpoints.append(corners)
 
         cv2.drawChessboardCorners(img, (9,6), corners, ret)
+        # If found, draw corners
+        plt.imshow(img)
+        plt.show()
+        
 
 cv2.destroyAllWindows()
 
