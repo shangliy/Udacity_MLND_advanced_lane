@@ -480,7 +480,7 @@ def process_image(image):
     frame = frame + 1
     #imsave('diag_'+str(frame)+'.jpg',diagScreen)
     
-    return diagScreen
+    return result
 
         
 

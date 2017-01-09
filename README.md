@@ -92,16 +92,21 @@ The steps of this project are the following:
   > Detail Decscription video
 
 2. Video processing pipline.
-```flow
-st=>start: Start
-e=>end: End
-op1=>operation: My Operation
-sub1=>subroutine: My Subroutine
-cond=>condition: Yes or No?
-io=>inputoutput: catch something...
-```
-
-
-The images in `test_images` are for testing your pipeline on single frames.  The video called `project_video.mp4` is the video your pipeline should work well on.  `challenge_video.mp4` is an extra (and optional) challenge for you if you want to test your pipeline.
-
-If you're feeling ambitious (totally optional though), don't stop there!  We encourage you to go out and take video of your own, calibrate your camera and show us how you would implement this project from scratch!# advanced_lane
+	* The pipline flowchart shown below
+	**pipline flowchart**![pipline flowchart](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/video_pipline.png?raw=true)
+    Several key points:
+    > * In the first few frames of video, the algorithm should perform a search without prior assumptions about where the lines.The start point are calculate based on whole image and row by row search using big window. If missing points, using pre-row point.
+    > * Once a high-confidence detection is achieved -- In my case, the first 10 frames and frame whcih line located at allowed threshold as robust, these image would be saved and updated in lanne_class.
+    >  * The high confidence information is used in frame line detection:
+    >     * For start point, I use start point from preframe to narrow the window size:
+    >     **Start point search in first frames**![pipline flowchart](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/imageedit_3_3404131181.jpg?raw=true)
+    >     **Start point search in later frames**![Start point search](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/imageedit_6_6127948295.jpg?raw=true)
+    >     this not only improve accracy (removing the nosiy info) and increase the search speed (less calculation).
+    >     But this also bring larger prob of missing start points, so when missing data or data not believable (distance too large), I use pre_frame start point.
+    >      **Start point search in later frames**![Start point search](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/NEW_START%20POINT.png?raw=true)
+    >     * For searching of points in each row, I also use smaller window size, reason and advantagement same as above, so is the risk. So I check the points strictly and use pre_info to do inference:
+    >       When points missing, I will use the best_fit based on robusrt frames to do prediction;
+    >       Then, compare the detected or calculated point with pre_frame and pre_row point, then if they fail, I choose to use point from pre_frame or row.
+    >       Detail shown below:
+    >       **row point search in later frames**![row point search](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/New_search.png?raw=true)
+	
