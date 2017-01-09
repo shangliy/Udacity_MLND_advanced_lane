@@ -27,6 +27,25 @@ The steps of this project are the following:
 	* Read in the camera calibration matrix and distortion coefficients
 	* Undistort image using calibre matrix (Results shown above)
 	* Using methods to get binary images
+	 * X-axis Gratituds 
+	 > abs_sobel_thresh(indist, orient='x', sobel_kernel=ksize, thresh=(20, 250))
+	 > ![X-axis Gratituds ](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/gradx.jpg?raw=true)
+	 * Y-axis Gratituds 
+	 > abs_sobel_thresh(indist, orient='y', sobel_kernel=ksize, thresh=(50, 250))
+	 > ![Y-axis Gratituds ](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/grady.jpg?raw=true)
+	 * Gradient Magnitude thresh fllter 
+	 > mag_binary = utils.mag_thresh(indist, sobel_kernel=ksize, mag_thresh=(40, 250))
+	 > ![Gradient Magnitude ](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/gradient_mag.jpg?raw=true)
+	  * Gradient direction thresh fllter 
+	 > dir_binary = utils.dir_threshold(indist, sobel_kernel=ksize, thresh=(np.pi/6, np.pi/2))
+	 > ![Gradient direction ](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/gradient_dir.jpg?raw=true)
+	  * Gradient Magnitude thresh fllter 
+	 > mag_binary = utils.mag_thresh(indist, sobel_kernel=ksize, mag_thresh=(40, 250))
+	 > ![Gradient Magnitude ](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/gradient_mag.jpg?raw=true)
+	  * Gradient Magnitude thresh fllter 
+	 > mag_binary = utils.mag_thresh(indist, sobel_kernel=ksize, mag_thresh=(40, 250))
+	 > ![Gradient Magnitude ](https://github.com/shangliy/advanced_lane/blob/master/pipline_images/gradient_mag.jpg?raw=true)
+	 
   
 3. Apply a perspective transform to rectify binary image ("birds-eye view"). 
 4. Detect lane pixels and fit to find lane boundary.
