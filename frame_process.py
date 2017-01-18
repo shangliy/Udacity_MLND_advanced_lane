@@ -64,18 +64,18 @@ def process_image(image):
     diag_mag = utils.dack_img(mag_binary)
     diag_dir = utils.dack_img(dir_binary)
     diag_s = np.dstack((s_binary,s_binary,s_binary))   
-    imsave('gradx.jpg',diag_gradx)
-    imsave('grady.jpg',diag_grady)
-    imsave('gradient_mag.jpg',diag_mag)
-    imsave('gradient_dir.jpg',diag_dir)
-    imsave('diag_s.jpg',diag_s)
+    #imsave('gradx.jpg',diag_gradx)
+    #imsave('grady.jpg',diag_grady)
+    #imsave('gradient_mag.jpg',diag_mag)
+    #imsave('gradient_dir.jpg',diag_dir)
+    #imsave('diag_s.jpg',diag_s)
     
     # Combine all filters to get binary image
     combined = np.zeros_like(dir_binary, dtype=np.uint8)
     combined[ (s_binary == 255)|((((gradx == 1)) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1)))] = 1
     img_size = (combined.shape[1], combined.shape[0])
     diag_com = utils.dack_img(combined)
-    imsave('diag_com.jpg',diag_com)
+    #imsave('diag_com.jpg',diag_com)
     
     #3. Calculate the prospective transform matrix
     # Using masked area,canny edge and hougline to get the corresponding points
@@ -90,8 +90,9 @@ def process_image(image):
     M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst,src)
     warped = cv2.warpPerspective(combined,M,img_size)
+    warped_show = cv2.warpPerspective(indist,M,img_size)
 
-    if (flag_imshow):
+    if (not flag_imshow):
         # Plot up the  data
         f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
         f.tight_layout()
@@ -115,11 +116,11 @@ def process_image(image):
         dst_points_y.append(dst[0][1])
         l = lines.Line2D(src_points_x,src_points_y,linewidth=10)
         r = lines.Line2D(dst_points_x,dst_points_y,linewidth=10,color='red')
-        ax1.imshow(combined, cmap='gray')
-        ax1.add_line(l)
+        ax1.imshow(image)
+        #ax1.add_line(l)
         ax1.set_title('pre_transform Image', fontsize=50)
-        ax2.imshow(warped, cmap='gray')
-        ax2.add_line(r)
+        ax2.imshow(warped_show)
+        #ax2.add_line(r)
         ax2.set_title('Bird-view image', fontsize=50)
         plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
         plt.show()
@@ -308,9 +309,10 @@ def main():
     # Make a list of test images
     test_images = glob.glob('test_images/*.jpg')
     for idx, fname in enumerate(test_images):
+        print (fname)
         img = imread(fname)
         process_image(img)
-        sys.exit()
+        #sys.exit()
 
 
 if __name__ == '__main__':

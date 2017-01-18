@@ -149,6 +149,7 @@ def calculate_points(img,lines):
 
     y1_left_fin = 480
     x1_left_fin = x2_left - (y2_left-y1_left_fin)/k_left
+    #x1_left_fin = 570
     y2_left_fin = img.shape[0]
     x2_left_fin = x2_left - (y2_left-y2_left_fin)/k_left
 
@@ -156,6 +157,7 @@ def calculate_points(img,lines):
 
     y1_right_fin = 480
     x1_right_fin = x2_right - (y2_right-y1_right_fin)/k_right
+    #x1_right_fin = 750
     y2_right_fin = img.shape[0]
     x2_right_fin = x2_right - (y2_right-y2_right_fin)/k_right
 
@@ -176,6 +178,7 @@ def point_select_ori(binary_img,forward_pixel):
 
     imshape = binary_img.shape
     vertices = np.array([[(80,imshape[0]-50),(450, forward_pixel), (750, forward_pixel), (imshape[1]-150,imshape[0]-50)]], dtype=np.int32)
+    #vertices = np.array([[(30,imshape[0]-50),(530, 480), (800, 480), (imshape[1]-150,imshape[0]-50)]], dtype=np.int32)
     masked_edges = region_of_interest(binary_img,vertices)
 
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
@@ -189,7 +192,7 @@ def point_select_ori(binary_img,forward_pixel):
 
     rho = 2 # distance resolution in pixels of the Hough grid
     theta = np.pi/180 # angular resolution in radians of the Hough grid
-    threshold = 60     # minimum number of votes (intersections in Hough grid cell)
+    threshold = 60 #60    # minimum number of votes (intersections in Hough grid cell)
     min_line_length = 30 #minimum number of pixels making up a line
     max_line_gap = 20    # maximum gap in pixels between connectable line segments
 
